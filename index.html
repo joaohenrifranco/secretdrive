@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SecretDrive</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <h1>SecretDrive</h1>
+    <br />
+    <h2>Account</h2>
+    <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
+    <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
+    <br />
+    <h2>Upload</h2>
+    <input type="file" id="upload-encrypted" />
+    <input id="password" type="text" placeholder="Enter the password" />
+    <input
+      id="upload-encrypted"
+      type="button"
+      value="Upload Encrypted"
+      onclick="handleUploadClick()"
+    />
+    <br />
+    <h2>Download</h2>
+    <input type="object-id" id="object-id" placeholder="Enter the object ID" />
+    <input
+      id="download-decrypted"
+      type="button"
+      value="Download Decrypted"
+      onclick="handleDownloadClick()"
+    />
+    <br />
+    <h2>Files List</h2>
+    <pre id="content" style="white-space: pre-wrap"></pre>
+
+    <script type="text/javascript">
+      const CLIENT_ID =
+        "1028248986339-5tvr5e00e160ckqj5vuka7dokr3ipjol.apps.googleusercontent.com";
+      const API_KEY = "AIzaSyCJAOid4cx0eD1EdI8oSCgnJtAc4I-SrlE";
+      const DISCOVERY_DOC =
+        "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
+      const SCOPES = "https://www.googleapis.com/auth/drive.metadata.readonly";
+
+      let tokenClient;
+      let gapiInited = false;
+      let gisInited = false;
+
+      document.getElementById("authorize_button").style.visibility = "hidden";
+      document.getElementById("signout_button").style.visibility = "hidden";
+
+      /**
+       * Callback after api.js is loaded.
+       */
+      function gapiLoaded() {
+        gapi.load("client", initializeGapiClient);
+      }
+
+      /**
+       * Callback after the API client is loaded. Loads the
+       * discovery doc to initialize the API.
+       */
+      async function initializeGapiClient() {
+        await gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: [DISCOVERY_DOC],
+        });
+        gapiInited = true;
+        maybeEnableButtons();
+      }
+
+      /**
+       * Callback after Google Identity Services are loaded.
+       */
+      function gisLoaded() {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: CLIENT_ID,
+          scope: SCOPES,
+          callback: "", // defined later
+        });
+        gisInited = true;
+        maybeEnableButtons();
+      }
+
+      /**
+       * Enables user interaction after all libraries are loaded.
+       */
+      function maybeEnableButtons() {
+        if (gapiInited && gisInited) {
+          document.getElementById("authorize_button").style.visibility =
+            "visible";
+        }
+      }
+
+      /**
+       *  Sign in the user upon button click.
+       */
+      function handleAuthClick() {
+        tokenClient.callback = async (resp) => {
+          if (resp.error !== undefined) {
+            throw resp;
+          }
+          document.getElementById("signout_button").style.visibility =
+            "visible";
+          document.getElementById("authorize_button").innerText = "Refresh";
+          await listFiles();
+        };
+
+        if (gapi.client.getToken() === null) {
+          // Prompt the user to select a Google Account and ask for consent to share their data
+          // when establishing a new session.
+          tokenClient.requestAccessToken({ prompt: "consent" });
+        } else {
+          // Skip display of account chooser and consent dialog for an existing session.
+          tokenClient.requestAccessToken({ prompt: "" });
+        }
+      }
+
+      /**
+       *  Sign out the user upon button click.
+       */
+      function handleSignoutClick() {
+        const token = gapi.client.getToken();
+        if (token !== null) {
+          google.accounts.oauth2.revoke(token.access_token);
+          gapi.client.setToken("");
+          document.getElementById("content").innerText = "";
+          document.getElementById("authorize_button").innerText = "Authorize";
+          document.getElementById("signout_button").style.visibility = "hidden";
+        }
+      }
+
+      /**
+       * Print metadata for first 10 files.
+       */
+      async function listFiles() {
+        let response;
+        try {
+          response = await gapi.client.drive.files.list({
+            pageSize: 20,
+            fields: "files(id, name)",
+          });
+        } catch (err) {
+          document.getElementById("content").innerText = err.message;
+          return;
+        }
+        const files = response.result.files;
+        if (!files || files.length == 0) {
+          document.getElementById("content").innerText = "No files found.";
+          return;
+        }
+        // Flatten to string to display
+        const output = files.reduce(
+          (str, file) => `${str}${file.name} (${file.id})\n`,
+          "Files:\n"
+        );
+        document.getElementById("content").innerText = output;
+      }
+
+      // # DOWNLOAD AND UPLOAD
+      async function download(fileId) {
+        const response = await gapi.client.drive.files.get({
+          fileId: fileId,
+          alt: "media",
+        });
+        return response.body;
+      }
+
+      async function upload(file) {
+        const response = await gapi.client.drive.files.create({
+          resource: {
+            name: file.name,
+            mimeType: file.type,
+          },
+          media: new Blob([file], { type: file.type }),
+          fields: "id",
+        });
+        return response.result.id;
+      }
+
+      // # ENCRYPTION AND DECRYPTION
+      async function decrypt(data, password) {
+        const { data: decrypted } = await openpgp.decrypt({
+          message: await openpgp.message.read(data),
+          passwords: [password],
+        });
+        return new Blob([new Uint8Array(decrypted.data)], {
+          type: "application/octet-stream",
+        });
+      }
+
+      async function encrypt(data, password) {
+        const { data: encrypted } = await openpgp.encrypt({
+          message: openpgp.message.fromBinary(data),
+          passwords: [password],
+          armor: false,
+        });
+        return new Blob([new Uint8Array(encrypted)], {
+          type: "application/octet-stream",
+        });
+      }
+
+      // # UI HANDLERS
+      function forceDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+      }
+
+
+      async function handleDownloadClick() {
+        const fileId = document.getElementById("object-id").value;
+        const encrypted = await download(fileId);
+        const password = document.getElementById("password").value;
+        const decrypted = await decrypt(encrypted, password);
+        forceDownload(decrypted, fileId);
+      }
+
+      async function handleUploadClick() {
+        const file = document.getElementById("upload-encrypted").files[0];
+        const password = document.getElementById("password").value;
+        const encrypted = await encrypt(file, password);
+        const fileId = await upload(encrypted);
+        document.getElementById("content").innerText = `Uploaded as ${fileId}`;
+      }
+    </script>
+    <script src="openpgp.js"></script>
+    <script
+      async
+      defer
+      src="https://apis.google.com/js/api.js"
+      onload="gapiLoaded()"
+    ></script>
+    <script
+      async
+      defer
+      src="https://accounts.google.com/gsi/client"
+      onload="gisLoaded()"
+    ></script>
+  </body>
+</html>
