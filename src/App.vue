@@ -26,7 +26,7 @@ function initGapi() {
 
 function loadGapiClient() {
   return new Promise((resolve) => {
-    gapi.load('client', resolve)
+    gapi.load('client:auth2', resolve)
   })
 }
 
