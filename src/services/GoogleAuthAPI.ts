@@ -53,6 +53,7 @@ export class GoogleAuth {
       console.info('[GoogleAuth] Stored token loaded')
       GoogleAuth.access_token = token
       gapi.client.setToken({ access_token: token })
+      GoogleAuth.onTokenChange(token)
     }
     console.info('[GoogleAuth] Stored token not found')
   }

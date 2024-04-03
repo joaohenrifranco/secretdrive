@@ -2,7 +2,7 @@ import { GoogleAuth } from '@/services/GoogleAuthAPI'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const AuthStore = defineStore('AuthStore', () => {
+export const useAuthStore = defineStore('AuthStore', () => {
   const isLogged = ref(false)
 
   GoogleAuth.onTokenChange = (token: string) => {
@@ -17,9 +17,14 @@ export const AuthStore = defineStore('AuthStore', () => {
     GoogleAuth.revokeToken()
   }
 
+  function init() {
+    GoogleAuth.initClient()
+  }
+
   return {
     isLogged,
     login,
-    logout
+    logout,
+    init
   }
 })
