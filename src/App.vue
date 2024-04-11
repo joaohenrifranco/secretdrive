@@ -1,10 +1,9 @@
 <script setup lang="ts">
+import '@arco-design/web-vue/dist/arco.css'
 import { onMounted, ref } from 'vue'
 import { RouterView } from 'vue-router'
-import { loadGoogleScripts } from './utils/loadGoogleScripts'
 import { useAuthStore } from './stores/AuthStore'
-import MainNavbar from '@/components/ui/navbar/MainNavbar.vue'
-
+import { loadGoogleScripts } from './utils/loadGoogleScripts'
 const { login, logout, init } = useAuthStore()
 
 onMounted(async () => {
@@ -17,15 +16,17 @@ const loading = ref<boolean>(true)
 </script>
 
 <template>
-  <MainNavbar />
-  <div v-if="loading">Loading Google API Libraries...</div>
-  <RouterView v-else />
+  <a-layout style="width: 100vw; height: 100vh">
+    <a-page-header title="Secret Drive" :show-back="false" />
+    <a-layout>
+      <a-layout-sider>Sider</a-layout-sider>
+      <a-layout-content
+        ><div v-if="loading">Loading Google API Libraries...</div>
+        <RouterView
+      /></a-layout-content>
+    </a-layout>
+    <a-layout-footer>Footer</a-layout-footer>
+  </a-layout>
 </template>
 
-<style scoped>
-.navbar {
-  width: 100%;
-  height: 60px;
-  background-color: #333;
-}
-</style>
+<style scoped></style>
