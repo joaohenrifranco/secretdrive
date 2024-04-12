@@ -1,32 +1,59 @@
 <script setup lang="ts">
-import '@arco-design/web-vue/dist/arco.css'
-import { onMounted, ref } from 'vue'
-import { RouterView } from 'vue-router'
-import { useAuthStore } from './stores/AuthStore'
-import { loadGoogleScripts } from './utils/loadGoogleScripts'
-const { login, logout, init } = useAuthStore()
+import { onMounted, ref } from 'vue';
+import { RouterView } from 'vue-router';
+import { useAuthStore } from './stores/AuthStore';
+import { useFilesStore } from './stores/FilesStore';
+import { loadGoogleScripts } from './utils/loadGoogleScripts';
+
+const authStore = useAuthStore();
+const filesStore = useFilesStore();
+
+const loading = ref<boolean>(true);
+const visible = ref(false);
+
+const handleOk = () => {
+  authStore.login();
+  visible.value = false;
+};
 
 onMounted(async () => {
-  await loadGoogleScripts()
-  init()
-  loading.value = false
-})
-
-const loading = ref<boolean>(true)
+  await loadGoogleScripts();
+  authStore.init();
+  loading.value = false;
+});
 </script>
 
 <template>
-  <a-layout style="width: 100vw; height: 100vh">
-    <a-page-header title="Secret Drive" :show-back="false" />
-    <a-layout>
-      <a-layout-sider>Sider</a-layout-sider>
-      <a-layout-content
-        ><div v-if="loading">Loading Google API Libraries...</div>
-        <RouterView
-      /></a-layout-content>
-    </a-layout>
-    <a-layout-footer>Footer</a-layout-footer>
-  </a-layout>
+  <div class="main-layout">
+    <a-page-header title="Secret Drive" :show-back="false">
+      <template #extra>
+        <a-button type="primary" @click="filesStore.listFiles()">Refresh files</a-button>
+        <a-avatar v-if="authStore.isLogged" icon="G" />
+      </template>
+    </a-page-header>
+    <section class="main">
+      <a-spin v-if="loading" size="40" tip="Loading Google APIs..." />
+      <RouterView v-else />
+    </section>
+  </div>
+  <a-modal :open="!loading && !authStore.isLogged" @ok="handleOk" hide-cancel ok-text="Login">
+    <div>Connect your Google Account to continue</div>
+  </a-modal>
 </template>
 
-<style scoped></style>
+<style scoped>
+.main-layout {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  height: 100%;
+  background-color: #f6f6f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+</style>

@@ -1,30 +1,31 @@
-import { GoogleAuth } from '@/services/GoogleAuthAPI'
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { GoogleAuth } from '@/services/GoogleAuthAPI';
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
 
 export const useAuthStore = defineStore('AuthStore', () => {
-  const isLogged = ref(false)
+  const isLogged = ref(false);
 
   GoogleAuth.onTokenChange = (token: string) => {
-    isLogged.value = !!token
-  }
+    console.log('Token changed:', token);
+    isLogged.value = !!token;
+  };
 
   function login() {
-    GoogleAuth.requestToken()
+    GoogleAuth.requestToken();
   }
 
   function logout() {
-    GoogleAuth.revokeToken()
+    GoogleAuth.revokeToken();
   }
 
   function init() {
-    GoogleAuth.initClient()
+    GoogleAuth.initClient();
   }
 
   return {
     isLogged,
     login,
     logout,
-    init
-  }
-})
+    init,
+  };
+});
