@@ -22,14 +22,15 @@ export const useFilesStore = defineStore('FilesStore', () => {
     await DriveAPI.uploadFile(name, encryptedStream);
   }
 
-  async function addToQueue(name: string, stream: ReadableStream) {
-    const encryptedStream = await Crypt.encrypt(stream, password.value);
-    queue.value.push({ name, stream: encryptedStream });
+  async function addToQueue(fileList: FileList) {
+    for (const file of fileList) {
+      queue.value.push({ name: file.name, stream: file.stream() });
+    }
   }
 
   async function processQueue() {
     for (const { name, stream } of queue.value) {
-      await DriveAPI.uploadFile(name, stream);
+      await uploadFile(name, stream);
     }
     queue.value = [];
   }
@@ -47,5 +48,6 @@ export const useFilesStore = defineStore('FilesStore', () => {
     addToQueue,
     processQueue,
     files,
+    queue,
   };
 });

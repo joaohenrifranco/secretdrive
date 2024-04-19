@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { RouterView } from 'vue-router';
+import UploadButton from './components/UploadButton.vue';
 import { useAuthStore } from './stores/AuthStore';
 import { useFilesStore } from './stores/FilesStore';
 import { loadGoogleScripts } from './utils/loadGoogleScripts';
@@ -27,8 +28,11 @@ onMounted(async () => {
   <div class="main-layout">
     <a-page-header title="Secret Drive" :show-back="false">
       <template #extra>
+        {{ filesStore.queue }}
         <a-button type="primary" @click="filesStore.listFiles()">Refresh files</a-button>
-        <a-avatar v-if="authStore.isLogged" icon="G" />
+        <a-button type="primary" @click="filesStore.processQueue()">Process queue</a-button>
+        <upload-button />
+        <a-avatar v-if="authStore.isLogged" icon="G" @click="authStore.logout" />
       </template>
     </a-page-header>
     <section class="main">
