@@ -5,6 +5,7 @@ import { ref } from 'vue';
 
 export const useFilesStore = defineStore('FilesStore', () => {
   const password = ref('');
+  const queue = ref<{ name: string; stream: ReadableStream }[]>([]);
 
   const setPassword = (newPassword: string) => {
     password.value = newPassword;
@@ -16,9 +17,21 @@ export const useFilesStore = defineStore('FilesStore', () => {
     files.value = await DriveAPI.listFiles();
   }
 
-  async function addFile(name: string, stream: ReadableStream) {
+  async function uploadFile(name: string, stream: ReadableStream) {
     const encryptedStream = await Crypt.encrypt(stream, password.value);
     await DriveAPI.uploadFile(name, encryptedStream);
+  }
+
+  async function addToQueue(name: string, stream: ReadableStream) {
+    const encryptedStream = await Crypt.encrypt(stream, password.value);
+    queue.value.push({ name, stream: encryptedStream });
+  }
+
+  async function processQueue() {
+    for (const { name, stream } of queue.value) {
+      await DriveAPI.uploadFile(name, stream);
+    }
+    queue.value = [];
   }
 
   async function downloadFile(fileId: string) {
@@ -29,8 +42,10 @@ export const useFilesStore = defineStore('FilesStore', () => {
   return {
     setPassword,
     listFiles,
-    addFile,
+    uploadFile,
     downloadFile,
+    addToQueue,
+    processQueue,
     files,
   };
 });
