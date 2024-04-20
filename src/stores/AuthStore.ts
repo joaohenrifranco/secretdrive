@@ -6,7 +6,6 @@ export const useAuthStore = defineStore('AuthStore', () => {
   const isLogged = ref(false);
 
   GoogleAuth.onTokenChange = (token: string) => {
-    console.log('Token changed:', token);
     isLogged.value = !!token;
   };
 

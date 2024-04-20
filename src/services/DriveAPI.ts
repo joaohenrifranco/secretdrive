@@ -27,23 +27,44 @@ export class DriveAPI {
       },
     });
 
-    console.log(
-      stream
-        .getReader()
-        .read()
-        .then((r) => r.value),
-    );
+    // Only works on Chrome as of 2024-04
+    // await fetch(
+    //   `https://www.googleapis.com/upload/drive/v3/files/${createResponse.result.id}?uploadType=resumable`,
+    //   {
+    //     method: 'PATCH',
+    //     headers: {
+    //       Authorization: `Bearer ${gapi.auth.getToken().access_token}`,
+    //     },
+    //     body: stream,
+    //     duplex: 'half',
+    //   },
+    // );
 
-    await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${createResponse.result.id}?uploadType=media`,
-      {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${gapi.auth.getToken().access_token}`,
+    const reader = stream.getReader();
+
+    let offset = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      // multipart upload
+      await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${createResponse.result.id}?uploadType=media`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${GoogleAuth.access_token}`,
+            'Content-Length': value.byteLength.toString(),
+            'Content-Range': `bytes ${offset}-${offset + value.byteLength - 1}/*`,
+          },
         },
-        body: stream,
-      },
-    );
+      );
+
+      offset += value.byteLength;
+    }
   }
 
   static downloadFile(id: string): Promise<ReadableStream> {

@@ -32,7 +32,7 @@ export const useFilesStore = defineStore('FilesStore', () => {
     for (const { name, stream } of queue.value) {
       await uploadFile(name, stream);
     }
-    queue.value = [];
+    // queue.value = [];
   }
 
   async function downloadFile(fileId: string) {
@@ -49,5 +49,6 @@ export const useFilesStore = defineStore('FilesStore', () => {
     processQueue,
     files,
     queue,
+    password,
   };
 });
