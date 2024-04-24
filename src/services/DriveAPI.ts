@@ -20,25 +20,26 @@ export class DriveAPI {
   }
 
   static async uploadFile(name: string, stream: ReadableStream): Promise<void> {
-    const createResponse = await gapi.client.drive.files.create({
-      resource: {
-        name: name,
-        mimeType: 'application/octet-stream',
+    const createResponse = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${GoogleAuth.access_token}`,
+          'Content-Type': 'application/json',
+          'Content-Length': '0',
+        },
+        body: JSON.stringify({
+          name,
+        }),
       },
-    });
+    );
 
-    // Only works on Chrome as of 2024-04
-    // await fetch(
-    //   `https://www.googleapis.com/upload/drive/v3/files/${createResponse.result.id}?uploadType=resumable`,
-    //   {
-    //     method: 'PATCH',
-    //     headers: {
-    //       Authorization: `Bearer ${gapi.auth.getToken().access_token}`,
-    //     },
-    //     body: stream,
-    //     duplex: 'half',
-    //   },
-    // );
+    const sessionUri = createResponse.headers.get('Location');
+
+    if (!sessionUri) {
+      throw new Error('[DRIVE_API] Drive API did not return a session URI');
+    }
 
     const reader = stream.getReader();
 
@@ -50,18 +51,14 @@ export class DriveAPI {
         break;
       }
 
-      // multipart upload
-      await fetch(
-        `https://www.googleapis.com/upload/drive/v3/files/${createResponse.result.id}?uploadType=media`,
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${GoogleAuth.access_token}`,
-            'Content-Length': value.byteLength.toString(),
-            'Content-Range': `bytes ${offset}-${offset + value.byteLength - 1}/*`,
-          },
+      await fetch(sessionUri, {
+        method: 'PUT',
+        headers: {
+          'Content-Length': value.byteLength.toString(),
+          'Content-Range': `bytes ${offset}-${offset + value.byteLength - 1}/12`,
         },
-      );
+        body: value,
+      });
 
       offset += value.byteLength;
     }
