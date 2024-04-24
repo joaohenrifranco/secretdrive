@@ -15,6 +15,7 @@ export const useAuthStore = defineStore('AuthStore', () => {
 
   function logout() {
     GoogleAuth.revokeToken();
+    isLogged.value = false;
   }
 
   function init() {
