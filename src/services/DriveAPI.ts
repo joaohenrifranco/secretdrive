@@ -1,3 +1,4 @@
+import { chunkedStreamGenerator } from '@/utils/chunkedStream';
 import { GoogleAuth } from './GoogleAuthAPI';
 
 type ListFilesReturnType = {
@@ -42,25 +43,21 @@ export class DriveAPI {
     }
 
     const reader = stream.getReader();
-
+    const chunkSize = 256 * 1024; // 256 KB in bytes
     let offset = 0;
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
+
+    for await (const chunk of chunkedStreamGenerator(reader, chunkSize)) {
+      const totalLengthIndicator = chunk.byteLength === chunkSize ? '*' : offset + chunk.byteLength;
 
       await fetch(sessionUri, {
         method: 'PUT',
         headers: {
-          'Content-Length': value.byteLength.toString(),
-          'Content-Range': `bytes ${offset}-${offset + value.byteLength - 1}/12`,
+          'Content-Length': chunk.byteLength.toString(),
+          'Content-Range': `bytes ${offset}-${offset + chunk.byteLength - 1}/${totalLengthIndicator}`,
         },
-        body: value,
+        body: chunk,
       });
-
-      offset += value.byteLength;
+      offset += length;
     }
   }
 
