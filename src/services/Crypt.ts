@@ -4,18 +4,16 @@ const COMPRESSION_ALGORITHM = openpgp.enums.compression.zlib;
 
 export class Crypt {
   static async encrypt(inputStream: ReadableStream, password: string): Promise<ReadableStream> {
-    return inputStream;
+    const message = await openpgp.createMessage({ binary: inputStream });
 
-    // const message = await openpgp.createMessage({ binary: inputStream })
+    const encrypted = await openpgp.encrypt({
+      message,
+      passwords: password,
+      format: 'binary',
+      config: { preferredCompressionAlgorithm: COMPRESSION_ALGORITHM },
+    });
 
-    // const encrypted = await openpgp.encrypt({
-    //   message,
-    //   passwords: password,
-    //   format: 'binary',
-    //   config: { preferredCompressionAlgorithm: COMPRESSION_ALGORITHM }
-    // })
-
-    // return webToReadableStream(encrypted)
+    return webToReadableStream(encrypted);
   }
 
   static async decrypt(inputStream: ReadableStream, password: string): Promise<ReadableStream> {
