@@ -57,7 +57,7 @@ export class DriveAPI {
         },
         body: chunk,
       });
-      offset += length;
+      offset += chunk.byteLength;
     }
   }
 
