@@ -1,7 +1,12 @@
 <template>
   <div class="home-view">
     <div class="file-grid">
-      <div class="file" v-for="file in filesStore.files" :key="file.id">
+      <div
+        class="file"
+        v-for="file in filesStore.files"
+        :key="file.id"
+        @click="file.id && filesStore.downloadFile(file.id)"
+      >
         <ph-file :size="32" />
         {{ file.name }}
       </div>

@@ -3,7 +3,10 @@ import * as openpgp from 'openpgp';
 const COMPRESSION_ALGORITHM = openpgp.enums.compression.zlib;
 
 export class Crypt {
-  static async encrypt(inputStream: ReadableStream, password: string): Promise<ReadableStream> {
+  static async encrypt(
+    inputStream: ReadableStream,
+    password: string,
+  ): Promise<ReadableStream<Uint8Array>> {
     const message = await openpgp.createMessage({ binary: inputStream });
 
     const encrypted = await openpgp.encrypt({
@@ -16,7 +19,10 @@ export class Crypt {
     return webToReadableStream(encrypted);
   }
 
-  static async decrypt(inputStream: ReadableStream, password: string): Promise<ReadableStream> {
+  static async decrypt(
+    inputStream: ReadableStream,
+    password: string,
+  ): Promise<ReadableStream<Uint8Array>> {
     const message = await openpgp.readMessage({
       binaryMessage: inputStream,
     });

@@ -37,13 +37,23 @@ export const useFilesStore = defineStore('FilesStore', () => {
 
   async function downloadFile(fileId: string) {
     const stream = await DriveAPI.downloadFile(fileId);
-    return Crypt.decrypt(stream, password.value);
+    const descryptedStream = Crypt.decrypt(stream, password.value);
+
+    function streamToArray(stream: ReadableStream<Uint8Array>) {
+      return new Response(stream).arrayBuffer();
+    }
+    // create blob and download
+    const blob = new Blob([await streamToArray(await descryptedStream)]);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileId;
+    a.click();
   }
 
   return {
     setPassword,
     listFiles,
-    uploadFile,
     downloadFile,
     addToQueue,
     processQueue,
