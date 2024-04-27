@@ -1,6 +1,6 @@
 export async function* chunkedStreamGenerator(
   reader: ReadableStreamDefaultReader,
-  chunkSize: number = 256 * 1024,
+  chunkSize: number,
 ): AsyncGenerator<Uint8Array, void, undefined> {
   let buffer = new Uint8Array(chunkSize); // Buffer to accumulate data
   let bufferLength = 0; // Current length of the buffer
