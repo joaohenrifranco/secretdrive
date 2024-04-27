@@ -1,4 +1,4 @@
-import { chunkedStreamGenerator } from '@/utils/chunkedStream';
+import { getFixedSizeChunk } from '@/utils/fixedSizeChunk';
 import { GoogleAuth } from './GoogleAuthAPI';
 
 type ListFilesReturnType = {
@@ -33,57 +33,57 @@ export class DriveAPI {
     sessionUri: string,
     reader: ReadableStreamDefaultReader,
     readOffset: number,
-    unsentBuffer: ArrayBuffer | null,
+    unsentBuffer: Uint8Array | null,
   ) {
     if (!unsentBuffer) {
-      unsentBuffer = new ArrayBuffer(0);
+      unsentBuffer = new Uint8Array(0);
     }
 
     const askedChunkSize = REQUEST_CHUNK_SIZE - unsentBuffer.byteLength;
     console.log(`Asking for ${askedChunkSize} bytes`);
-    const readResult = await chunkedStreamGenerator(reader, askedChunkSize).next();
+    const readResult = await getFixedSizeChunk(reader, askedChunkSize).next();
 
     if (readResult.done) {
+      console.log('READER DONE');
       return;
     }
 
     const readChunk = readResult.value;
-    const bytesRead = readOffset + readChunk.byteLength;
+    const totalBytesRead = readOffset + readChunk.byteLength;
     console.log(`Read ${readChunk.byteLength} bytes`);
-    console.log(`Total read ${bytesRead} bytes`);
+    console.log(`Total read ${totalBytesRead} bytes`);
+
+    const requestBuffer = new Uint8Array(unsentBuffer.byteLength + readChunk.byteLength);
+    requestBuffer.set(unsentBuffer, 0);
+    requestBuffer.set(readChunk, unsentBuffer.byteLength);
 
     const unknown = '*';
     const isLast = readChunk.byteLength !== REQUEST_CHUNK_SIZE;
-    const contentRangeTotal = isLast ? bytesRead.toString() : unknown;
-
-    const requestBuffer = new Uint8Array(unsentBuffer.byteLength + readChunk.byteLength);
-    requestBuffer.set(new Uint8Array(unsentBuffer), 0);
-    requestBuffer.set(new Uint8Array(readChunk), unsentBuffer.byteLength);
-
-    console.log(`Uploading chunk ${readOffset}-${bytesRead - 1}/${contentRangeTotal}`);
-
+    const contentRangeTotal = isLast ? totalBytesRead.toString() : unknown;
+    console.log(`Uploading chunk ${readOffset}-${totalBytesRead - 1}/${contentRangeTotal}`);
     const chunkResponse = await fetch(sessionUri, {
       method: 'PUT',
       headers: {
         'Content-Length': readChunk.byteLength.toString(),
-        'Content-Range': `bytes ${readOffset}-${bytesRead - 1}/${contentRangeTotal}`,
+        'Content-Range': `bytes ${readOffset}-${totalBytesRead - 1}/${contentRangeTotal}`,
       },
       body: requestBuffer,
     });
 
+    let unsentBytes = 0;
     if (chunkResponse.status === RESPONSE_CODES.resumeIncomplete) {
       const lastByte = parseInt(chunkResponse.headers.get('Range')?.split('-')[1] ?? '0', 10);
       const bytesSent = lastByte + 1;
-
       console.log(`Upload incomplete, resuming from ${bytesSent}`);
-
-      const unsent = bytesRead - bytesSent;
-      const unsentBuffer = requestBuffer.slice(requestBuffer.length - unsent);
-
-      await this.uploadStream(sessionUri, reader, bytesRead, unsentBuffer);
+      unsentBytes = totalBytesRead - bytesSent;
     }
-
-    await this.uploadStream(sessionUri, reader, bytesRead, null);
+    if (unsentBytes > 0) {
+      console.log('USING REQUEST BUFFER');
+      const unsentBuffer = requestBuffer.subarray(requestBuffer.length - unsentBytes);
+      await this.uploadStream(sessionUri, reader, totalBytesRead, unsentBuffer);
+      return;
+    }
+    await this.uploadStream(sessionUri, reader, totalBytesRead, null);
   }
 
   static async uploadFile(name: string, stream: ReadableStream): Promise<void> {
