@@ -80,4 +80,28 @@ describe('chunkedStreamGenerator', () => {
 
     expect(chunks).toEqual([]);
   });
+
+  test('blob from file should be equal to the original file', async () => {
+    const targetSize = 27;
+    const randomData = new Uint8Array(1234).map(() => Math.floor(Math.random() * 256));
+    const reader = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        for (let i = 0; i < randomData.length; i += targetSize) {
+          controller.enqueue(randomData.subarray(i, i + targetSize));
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        controller.close();
+      },
+    }).getReader();
+
+    let blob = new Blob();
+    for await (const chunk of getFixedSizeChunk(reader, targetSize)) {
+      blob = new Blob([blob, chunk]);
+    }
+
+    const file = new File([randomData], 'random.bin');
+    const fileBlob = await file.arrayBuffer();
+
+    expect(blob).toEqual(fileBlob);
+  });
 });
