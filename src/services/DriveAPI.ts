@@ -31,7 +31,7 @@ export class DriveAPI {
 
   private static async uploadStream(
     sessionUri: string,
-    reader: ReadableStreamDefaultReader,
+    chunkGenerator: AsyncGenerator<Uint8Array, void>,
     readOffset: number,
     unsentBuffer: Uint8Array | null,
   ) {
@@ -40,18 +40,14 @@ export class DriveAPI {
     }
 
     const askedChunkSize = REQUEST_CHUNK_SIZE - unsentBuffer.byteLength;
-    console.log(`Asking for ${askedChunkSize} bytes`);
-    const readResult = await getFixedSizeChunk(reader, askedChunkSize).next();
+    const readResult = await chunkGenerator.next(askedChunkSize);
 
     if (readResult.done) {
-      console.log('READER DONE');
       return;
     }
 
     const readChunk = readResult.value;
     const totalBytesRead = readOffset + readChunk.byteLength;
-    console.log(`Read ${readChunk.byteLength} bytes`);
-    console.log(`Total read ${totalBytesRead} bytes`);
 
     const requestBuffer = new Uint8Array(unsentBuffer.byteLength + readChunk.byteLength);
     requestBuffer.set(unsentBuffer, 0);
@@ -60,7 +56,7 @@ export class DriveAPI {
     const unknown = '*';
     const isLast = readChunk.byteLength !== REQUEST_CHUNK_SIZE;
     const contentRangeTotal = isLast ? totalBytesRead.toString() : unknown;
-    console.log(`Uploading chunk ${readOffset}-${totalBytesRead - 1}/${contentRangeTotal}`);
+
     const chunkResponse = await fetch(sessionUri, {
       method: 'PUT',
       headers: {
@@ -74,16 +70,14 @@ export class DriveAPI {
     if (chunkResponse.status === RESPONSE_CODES.resumeIncomplete) {
       const lastByte = parseInt(chunkResponse.headers.get('Range')?.split('-')[1] ?? '0', 10);
       const bytesSent = lastByte + 1;
-      console.log(`Upload incomplete, resuming from ${bytesSent}`);
       unsentBytes = totalBytesRead - bytesSent;
     }
     if (unsentBytes > 0) {
-      console.log('USING REQUEST BUFFER');
       const unsentBuffer = requestBuffer.subarray(requestBuffer.length - unsentBytes);
-      await this.uploadStream(sessionUri, reader, totalBytesRead, unsentBuffer);
+      await this.uploadStream(sessionUri, chunkGenerator, totalBytesRead, unsentBuffer);
       return;
     }
-    await this.uploadStream(sessionUri, reader, totalBytesRead, null);
+    await this.uploadStream(sessionUri, chunkGenerator, totalBytesRead, null);
   }
 
   static async uploadFile(name: string, stream: ReadableStream): Promise<void> {
@@ -109,7 +103,8 @@ export class DriveAPI {
     }
 
     const reader = stream.getReader();
-    await this.uploadStream(sessionUri, reader, 0, null);
+    const chunkGenerator = getFixedSizeChunk(reader, REQUEST_CHUNK_SIZE);
+    await this.uploadStream(sessionUri, chunkGenerator, 0, null);
   }
 
   static downloadFile(id: string): Promise<ReadableStream> {

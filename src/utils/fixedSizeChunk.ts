@@ -1,12 +1,14 @@
 export async function* getFixedSizeChunk(
   reader: ReadableStreamDefaultReader<Uint8Array>,
-  targetChuckSize: number,
-): AsyncGenerator<Uint8Array, void> {
-  let buffer = new Uint8Array(targetChuckSize);
+  initialTargetSize: number,
+): AsyncGenerator<Uint8Array, void, number> {
+  let targetSize = initialTargetSize;
+  let buffer = new Uint8Array(initialTargetSize);
   let bufferOffset = 0;
 
   while (true) {
-    const { done, value: chuck } = await reader.read();
+    const { done, value: chunck } = await reader.read();
+
     if (done) {
       if (bufferOffset > 0) {
         yield buffer.subarray(0, bufferOffset);
@@ -15,17 +17,17 @@ export async function* getFixedSizeChunk(
     }
 
     let chunkOffset = 0;
-    while (chunkOffset < chuck.byteLength) {
+    while (chunkOffset < chunck.byteLength) {
       const spaceLeft = buffer.byteLength - bufferOffset;
-      const bytesToCopy = Math.min(spaceLeft, chuck.byteLength - chunkOffset);
+      const bytesToCopy = Math.min(spaceLeft, chunck.byteLength - chunkOffset);
 
-      buffer.set(chuck.subarray(chunkOffset, chunkOffset + bytesToCopy), bufferOffset);
+      buffer.set(chunck.subarray(chunkOffset, chunkOffset + bytesToCopy), bufferOffset);
       bufferOffset += bytesToCopy;
       chunkOffset += bytesToCopy;
 
-      if (bufferOffset === targetChuckSize) {
-        yield buffer;
-        buffer = new Uint8Array(targetChuckSize);
+      if (bufferOffset === targetSize) {
+        targetSize = yield buffer;
+        buffer = new Uint8Array(targetSize);
         bufferOffset = 0;
       }
     }
