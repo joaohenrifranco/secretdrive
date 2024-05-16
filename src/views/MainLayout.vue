@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { initGoogleScripts } from '@/interface/apis/loadGoogleScripts';
 import { useAuthStore } from '@/stores/AuthStore';
 import { useFilesStore } from '@/stores/FilesStore';
 import UploadButton from '@/views/components/UploadButton.vue';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { RouterView } from 'vue-router';
 
 const authStore = useAuthStore();
@@ -16,12 +15,6 @@ const handleOk = () => {
   authStore.login();
   visible.value = false;
 };
-
-onMounted(async () => {
-  await initGoogleScripts();
-  authStore.init();
-  loading.value = false;
-});
 </script>
 
 <template>
@@ -37,8 +30,7 @@ onMounted(async () => {
       </template>
     </a-page-header>
     <section class="main">
-      <a-spin v-if="loading" size="40" tip="Loading Google APIs..." />
-      <RouterView v-else />
+      <RouterView />
     </section>
   </div>
   <a-modal :open="!loading && !authStore.isLogged" @ok="handleOk" hide-cancel ok-text="Login">
@@ -47,13 +39,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.main-layout {
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-  flex-direction: column;
-}
-
 .main {
   height: 100%;
   background-color: #f6f6f6;

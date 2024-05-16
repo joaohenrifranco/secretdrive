@@ -1,7 +1,30 @@
 <script setup>
-import MainLayout from './views/MainLayout.vue';
+import { useAuthStore } from '@/stores/AuthStore';
+import MainLayout from '@/views/MainLayout.vue';
+import { onMounted, ref } from 'vue';
+import { initGoogleScripts } from './interface/apis/loadGoogleScripts';
+
+const authStore = useAuthStore();
+const loading = ref(true);
+
+onMounted(async () => {
+  await initGoogleScripts();
+  authStore.init();
+  loading.value = false;
+});
 </script>
 
 <template>
-  <MainLayout />
+  <a-spin v-if="loading" size="40" tip="Loading Google APIs..." class="spin" />
+  <MainLayout v-else />
 </template>
+
+<style scoped>
+.spin {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+</style>
