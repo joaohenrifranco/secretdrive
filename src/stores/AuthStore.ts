@@ -1,25 +1,32 @@
-import { GoogleAuth } from '@/services/GoogleAuthAPI';
+import { GoogleAuthAPI, type TokenData } from '@/apis/GoogleAuthAPI';
+import { LocalStorage } from '@/services/LocalStorage';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
+const LOCAL_STORAGE_KEY = 'tokenData';
+
 export const useAuthStore = defineStore('AuthStore', () => {
   const isLogged = ref(false);
+  const tokenStorage = new LocalStorage<TokenData>(LOCAL_STORAGE_KEY);
 
-  GoogleAuth.onTokenChange = (token: string) => {
-    isLogged.value = !!token;
+  GoogleAuthAPI.onTokenChange = (tokenData: TokenData) => {
+    isLogged.value = !!tokenData.access_token;
+    tokenStorage.save(tokenData);
   };
 
   function login() {
-    GoogleAuth.requestToken();
+    GoogleAuthAPI.requestToken('consent');
   }
 
   function logout() {
-    GoogleAuth.revokeToken();
+    GoogleAuthAPI.revokeToken();
+    tokenStorage.clear();
     isLogged.value = false;
   }
 
   function init() {
-    GoogleAuth.initClient();
+    const tokenData = tokenStorage.load();
+    GoogleAuthAPI.initClient(tokenData?.access_token);
   }
 
   return {

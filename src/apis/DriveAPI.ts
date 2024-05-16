@@ -1,5 +1,5 @@
 import { getFixedSizeChunk } from '@/utils/fixedSizeChunk';
-import { GoogleAuth } from './GoogleAuthAPI';
+import { GoogleAuthAPI } from './GoogleAuthAPI';
 
 type ListFilesReturnType = {
   id: string | undefined;
@@ -17,7 +17,7 @@ const REQUEST_CHUNK_SIZE = 256 * 1024; // 256 KB in bytes
 
 export class DriveAPI {
   static async listFiles(): Promise<ListFilesReturnType> {
-    if (!GoogleAuth.access_token) {
+    if (!GoogleAuthAPI.access_token) {
       throw new Error('[GoogleAuth] No access token available');
     }
 
@@ -86,7 +86,7 @@ export class DriveAPI {
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${GoogleAuth.access_token}`,
+          Authorization: `Bearer ${GoogleAuthAPI.access_token}`,
           'Content-Type': 'application/json',
           'Content-Length': '0',
         },
@@ -110,7 +110,7 @@ export class DriveAPI {
   static downloadFile(id: string): Promise<ReadableStream> {
     return fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
       headers: {
-        Authorization: `Bearer ${GoogleAuth.access_token}`,
+        Authorization: `Bearer ${GoogleAuthAPI.access_token}`,
       },
     }).then((response) => response.body!);
   }
