@@ -4,7 +4,7 @@ import { RouterView } from 'vue-router';
 import UploadButton from './components/UploadButton.vue';
 import { useAuthStore } from './stores/AuthStore';
 import { useFilesStore } from './stores/FilesStore';
-import { loadGoogleScripts } from './utils/loadGoogleScripts';
+import { initGoogleScripts } from './utils/loadGoogleScripts';
 
 const authStore = useAuthStore();
 const filesStore = useFilesStore();
@@ -18,7 +18,7 @@ const handleOk = () => {
 };
 
 onMounted(async () => {
-  await loadGoogleScripts();
+  await initGoogleScripts();
   authStore.init();
   loading.value = false;
 });

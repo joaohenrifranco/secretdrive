@@ -7,11 +7,11 @@ const LOCAL_STORAGE_KEY = 'tokenData';
 
 export const useAuthStore = defineStore('AuthStore', () => {
   const isLogged = ref(false);
-  const tokenStorage = new LocalStorage<TokenData>(LOCAL_STORAGE_KEY);
+  const tokenStorage = new LocalStorage<string>(LOCAL_STORAGE_KEY);
 
   GoogleAuthAPI.onTokenChange = (tokenData: TokenData) => {
     isLogged.value = !!tokenData.access_token;
-    tokenStorage.save(tokenData);
+    tokenStorage.save(tokenData.access_token, tokenData.expires_at);
   };
 
   function login() {
@@ -25,8 +25,9 @@ export const useAuthStore = defineStore('AuthStore', () => {
   }
 
   function init() {
-    const tokenData = tokenStorage.load();
-    GoogleAuthAPI.initClient(tokenData?.access_token);
+    const access_token = tokenStorage.load();
+    isLogged.value = !!access_token;
+    GoogleAuthAPI.initClient(access_token);
   }
 
   return {

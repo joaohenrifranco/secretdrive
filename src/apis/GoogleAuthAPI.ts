@@ -24,7 +24,7 @@ export class GoogleAuthAPI {
     GoogleAuthAPI.tokenClient?.requestAccessToken({ prompt });
   }
 
-  static async initClient(token?: string) {
+  static async initClient(token: string | null) {
     if (!google || !google.accounts || !google.accounts.oauth2) {
       throw new Error('[GoogleAuthAPI] Google API not loaded');
     }
@@ -33,14 +33,10 @@ export class GoogleAuthAPI {
       GoogleAuthAPI.access_token = token;
       gapi.client.setToken({ access_token: token });
       console.info('[GoogleAuthAPI] Stored token loaded');
+      return;
     }
 
-    google.accounts.oauth2.initCodeClient({
-      client_id: '1028248986339-5tvr5e00e160ckqj5vuka7dokr3ipjol.apps.googleusercontent.com',
-      redirect_uri: 'postmessage',
-      scope: 'https://www.googleapis.com/auth/drive.file',
-    });
-
+    console.info('[GoogleAuthAPI] Creating token client');
     GoogleAuthAPI.tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: '1028248986339-5tvr5e00e160ckqj5vuka7dokr3ipjol.apps.googleusercontent.com',
       scope: 'https://www.googleapis.com/auth/drive.file',

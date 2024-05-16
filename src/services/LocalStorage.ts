@@ -1,8 +1,14 @@
 export class LocalStorage<Schema> {
   constructor(private key: string) {}
 
-  save(tokenResponse: Schema): void {
-    localStorage.setItem(this.key, JSON.stringify(tokenResponse));
+  save(data: Schema, ttl: number): void {
+    localStorage.setItem(
+      this.key,
+      JSON.stringify({
+        data,
+        expires_at: Date.now() + ttl,
+      }),
+    );
   }
 
   clear(): void {
@@ -10,10 +16,26 @@ export class LocalStorage<Schema> {
   }
 
   load(): Schema | null {
-    const token = localStorage.getItem(this.key);
-    if (!token) {
+    const raw = localStorage.getItem(this.key);
+    if (!raw) {
       return null;
     }
-    return JSON.parse(token);
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (error) {
+      console.error("[LocalStorage] Couldn't parse data", error);
+      localStorage.removeItem(this.key);
+      return null;
+    }
+
+    if (data.expires_at < Date.now()) {
+      localStorage.removeItem(this.key);
+      console.error('[LocalStorage] Saved data expired');
+      return null;
+    }
+
+    return JSON.parse(raw).data;
   }
 }
