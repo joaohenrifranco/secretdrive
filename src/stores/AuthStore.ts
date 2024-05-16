@@ -1,5 +1,5 @@
-import { GoogleAuthAPI, type TokenData } from '@/apis/GoogleAuthAPI';
-import { LocalStorage } from '@/services/LocalStorage';
+import { GoogleAuthAPI, type TokenData } from '@/interface/apis/GoogleAuthAPI';
+import { LocalStorage } from '@/interface/local/LocalStorage';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 

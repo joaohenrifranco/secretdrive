@@ -15,9 +15,9 @@
 </template>
 
 <script setup lang="ts">
+import { useFilesStore } from '@/stores/FilesStore';
 import { PhFile } from '@phosphor-icons/vue';
 import { onMounted, ref } from 'vue';
-import { useFilesStore } from '../stores/FilesStore';
 const fileSelectRef = ref<HTMLInputElement | null>(null);
 const filesStore = useFilesStore();
 

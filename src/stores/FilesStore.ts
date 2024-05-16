@@ -1,5 +1,5 @@
-import { DriveAPI } from '@/apis/DriveAPI';
-import { Crypt } from '@/services/Crypt';
+import { DriveAPI } from '@/interface/apis/DriveAPI';
+import { Crypt } from '@/interface/local/Crypt';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
