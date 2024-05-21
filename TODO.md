@@ -1,2 +1,2 @@
-- [] Extract Navbar
-- [] Finish login carousel
+- [ ] Extract Navbar
+- [ ] Finish login carousel

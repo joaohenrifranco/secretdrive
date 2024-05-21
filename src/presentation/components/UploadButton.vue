@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useFilesStore } from '@/stores/FilesStore';
+import { useFilesStore } from '@/application/FilesStore';
 import { ref } from 'vue';
 
 const filesStore = useFilesStore();

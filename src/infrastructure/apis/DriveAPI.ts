@@ -1,4 +1,4 @@
-import { getFixedSizeChunk } from '@/utils/fixedSizeChunk';
+import { getFixedSizeChunk } from '@/infrastructure/utils/fixedSizeChunk';
 import { GoogleAuthAPI } from './GoogleAuthAPI';
 
 type ListFilesReturnType = {

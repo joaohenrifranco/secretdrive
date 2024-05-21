@@ -1,8 +1,8 @@
 <script setup>
-import { useAuthStore } from '@/stores/AuthStore';
-import MainLayout from '@/views/MainLayout.vue';
+import { useAuthStore } from '@/application/AuthStore';
+import MainLayout from '@/presentation/layouts/MainLayout.vue';
 import { onMounted, ref } from 'vue';
-import { initGoogleScripts } from './interface/apis/loadGoogleScripts';
+import { initGoogleScripts } from '../services/apis/loadGoogleScripts';
 
 const authStore = useAuthStore();
 const loading = ref(true);

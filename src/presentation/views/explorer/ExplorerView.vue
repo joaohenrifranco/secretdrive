@@ -7,7 +7,7 @@
         :key="file.id"
         @click="file.id && filesStore.downloadFile(file.id)"
       >
-        <ph-file :size="32" />
+        <PhFile :size="32" />
         {{ file.name }}
       </div>
     </div>
@@ -15,15 +15,10 @@
 </template>
 
 <script setup lang="ts">
-import { useFilesStore } from '@/stores/FilesStore';
+import { useFilesStore } from '@/application/FilesStore';
 import { PhFile } from '@phosphor-icons/vue';
-import { onMounted, ref } from 'vue';
-const fileSelectRef = ref<HTMLInputElement | null>(null);
+import { onMounted } from 'vue';
 const filesStore = useFilesStore();
-
-const handleUploadClick = async () => {
-  const file = fileSelectRef.value?.files?.[0];
-};
 
 onMounted(() => {
   filesStore.listFiles();
@@ -32,8 +27,9 @@ onMounted(() => {
 
 <style scoped>
 .home-view {
-  display: flex;
   width: 100%;
+  height: 100%;
+  display: flex;
   padding: 20px;
 }
 
