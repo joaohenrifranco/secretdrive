@@ -1,4 +1,4 @@
-import ExplorerView from '@/presentation/views/ExplorerView.vue';
+import ExplorerView from '@/presentation/views/explorer/ExplorerView.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
