@@ -1,7 +1,7 @@
 import { DriveAPI } from '@/infrastructure/apis/DriveAPI';
 import { Crypt } from '@/infrastructure/local/Crypt';
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 export const useFilesStore = defineStore('FilesStore', () => {
   const password = ref('');
@@ -10,6 +10,8 @@ export const useFilesStore = defineStore('FilesStore', () => {
   const setPassword = (newPassword: string) => {
     password.value = newPassword;
   };
+
+  const isPasswordSet = computed<boolean>(() => password.value.length > 0);
 
   const files = ref<{ id: string | undefined; name: string | undefined }[]>([]);
 
@@ -54,6 +56,7 @@ export const useFilesStore = defineStore('FilesStore', () => {
   return {
     setPassword,
     listFiles,
+    isPasswordSet,
     downloadFile,
     addToQueue,
     processQueue,

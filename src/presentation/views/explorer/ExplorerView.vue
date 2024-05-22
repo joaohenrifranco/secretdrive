@@ -1,5 +1,23 @@
+<script setup lang="ts">
+import { useFilesStore } from '@/application/FilesStore';
+import { PhFile } from '@phosphor-icons/vue';
+import { onMounted } from 'vue';
+
+import UploadButton from '@/presentation/components/UploadButton.vue';
+
+const filesStore = useFilesStore();
+
+onMounted(() => {
+  filesStore.listFiles();
+});
+</script>
+
 <template>
   <div class="home-view">
+    {{ filesStore.queue }}
+    <a-button @click="filesStore.listFiles()">Refresh files</a-button>
+    <a-button @click="filesStore.processQueue()">Process queue</a-button>
+    <UploadButton />
     <div class="file-grid">
       <div
         class="file"
@@ -13,17 +31,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { useFilesStore } from '@/application/FilesStore';
-import { PhFile } from '@phosphor-icons/vue';
-import { onMounted } from 'vue';
-const filesStore = useFilesStore();
-
-onMounted(() => {
-  // filesStore.listFiles();
-});
-</script>
 
 <style scoped>
 .home-view {

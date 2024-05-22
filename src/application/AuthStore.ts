@@ -30,10 +30,15 @@ export const useAuthStore = defineStore('AuthStore', () => {
     GoogleAuthAPI.initClient(access_token);
   }
 
+  function getExpirationDate(): Date | null {
+    return tokenStorage.getExpirationDate();
+  }
+
   return {
     isLogged,
     login,
     logout,
     init,
+    getExpirationDate,
   };
 });
