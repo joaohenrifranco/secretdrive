@@ -2,6 +2,8 @@ export class LocalStorage<Schema> {
   constructor(private key: string) {}
 
   save(data: Schema, ttl: number): void {
+    console.log('Current date', new Date().toLocaleString());
+    console.log('Expiration date', new Date(Date.now() + ttl).toLocaleString());
     localStorage.setItem(
       this.key,
       JSON.stringify({
@@ -29,6 +31,8 @@ export class LocalStorage<Schema> {
       localStorage.removeItem(this.key);
       return null;
     }
+
+    console.log('[LocalStorage] Expiration date', new Date(data.expires_at).toLocaleString());
 
     if (data.expires_at < Date.now()) {
       localStorage.removeItem(this.key);

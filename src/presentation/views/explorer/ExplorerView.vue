@@ -21,7 +21,7 @@ import { onMounted } from 'vue';
 const filesStore = useFilesStore();
 
 onMounted(() => {
-  filesStore.listFiles();
+  // filesStore.listFiles();
 });
 </script>
 

@@ -49,7 +49,7 @@ export class GoogleAuthAPI {
     GoogleAuthAPI.access_token = tokenResponse.access_token;
     GoogleAuthAPI.onTokenChange({
       access_token: tokenResponse.access_token,
-      expires_at: parseInt(tokenResponse.expires_in, 10) * 1000 + Date.now(),
+      expires_at: parseInt(tokenResponse.expires_in, 10) + Date.now(),
     });
     console.info('[GoogleAuthAPI] Token response received');
   }
