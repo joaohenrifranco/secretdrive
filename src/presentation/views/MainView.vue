@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/application/AuthStore';
-import MainNavbar from '@/presentation/components/MainNavbar.vue';
+import MainNavbar from '@/presentation/views/MainNavbar.vue';
 import { ref } from 'vue';
 import { RouterView } from 'vue-router';
 const authStore = useAuthStore();
@@ -15,11 +15,9 @@ const handleOk = () => {
 </script>
 
 <template>
-  <div class="main-layout">
+  <div class="main-view">
     <MainNavbar />
-    <section class="main">
-      <RouterView />
-    </section>
+    <RouterView />
   </div>
   <a-modal :open="!loading && !authStore.isLogged" @ok="handleOk" hide-cancel ok-text="Login">
     <div>Connect your Google Account to continue</div>
@@ -27,11 +25,10 @@ const handleOk = () => {
 </template>
 
 <style scoped>
-.main-layout {
+.main-view {
+  width: 100%;
   height: 100vh;
-  background-color: #f6f6f6;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
 }
 </style>

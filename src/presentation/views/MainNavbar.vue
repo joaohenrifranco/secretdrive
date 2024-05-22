@@ -8,7 +8,7 @@ const authStore = useAuthStore();
 </script>
 
 <template>
-  <a-page-header title="Secret Drive" :show-back="false">
+  <a-page-header title="Secret Drive" :show-back="false" class="main-navbar">
     <template #extra>
       {{ filesStore.queue }}
       <a-button @click="filesStore.listFiles()">Refresh files</a-button>
@@ -19,3 +19,9 @@ const authStore = useAuthStore();
     </template>
   </a-page-header>
 </template>
+
+<style>
+.main-navbar {
+  box-shadow: 0 2px 8px #f0f0f0;
+}
+</style>

@@ -1,8 +1,9 @@
 <script setup>
 import { useAuthStore } from '@/application/AuthStore';
 import { initGoogleScripts } from '@/infrastructure/apis/loadGoogleScripts';
-import MainLayout from '@/presentation/layouts/MainLayout.vue';
+import MainView from '@/presentation/views/MainView.vue';
 import { onMounted, ref } from 'vue';
+import LoadingView from './views/LoadingView.vue';
 
 const authStore = useAuthStore();
 const loading = ref(true);
@@ -15,16 +16,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <a-spin v-if="loading" size="40" tip="Loading Google APIs..." class="spin" />
-  <MainLayout v-else />
+  <LoadingView v-if="loading" />
+  <MainView v-else />
 </template>
 
-<style scoped>
-.spin {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-</style>
+<style scoped></style>
