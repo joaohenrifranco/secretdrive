@@ -20,6 +20,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
+  authStore.setOnLogout(() => router.push({ name: 'login' }));
 
   if (to.meta.public || authStore.isLogged) {
     return next();

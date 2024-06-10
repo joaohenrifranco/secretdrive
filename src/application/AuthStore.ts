@@ -22,6 +22,7 @@ export const useAuthStore = defineStore('AuthStore', () => {
     GoogleAuthAPI.revokeToken();
     tokenStorage.clear();
     isLogged.value = false;
+    onLogout?.();
   }
 
   function init() {
@@ -34,11 +35,17 @@ export const useAuthStore = defineStore('AuthStore', () => {
     return tokenStorage.getExpirationDate();
   }
 
+  let onLogout: (() => void) | null = null;
+  function setOnLogout(callback: () => void) {
+    onLogout = callback;
+  }
+
   return {
     isLogged,
     login,
     logout,
     init,
     getExpirationDate,
+    setOnLogout,
   };
 });
