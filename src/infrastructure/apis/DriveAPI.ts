@@ -24,7 +24,9 @@ export class DriveAPI {
     const response = await gapi.client.drive.files.list({
       pageSize: 20,
       fields: 'files(id, name)',
+      orderBy: 'createdTime desc',
     });
+    // TODO: Handle next page token
 
     return response.result.files?.map((f) => ({ id: f.id, name: f.name })) ?? [];
   }

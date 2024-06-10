@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useFilesStore } from '@/application/FilesStore';
-import { PhFile } from '@phosphor-icons/vue';
-import { onMounted } from 'vue';
+import { useFileInput } from '@/presentation/composables/FileInput';
+import { PhArrowsClockwise, PhFile, PhFolder, PhUpload } from '@phosphor-icons/vue';
+import { onMounted, ref } from 'vue';
 
-import UploadButton from '@/presentation/components/UploadButton.vue';
-
+const uploadButton = ref<HTMLButtonElement | null>(null);
 const filesStore = useFilesStore();
+const fileInput = useFileInput(uploadButton);
 
 onMounted(() => {
   filesStore.listFiles();
@@ -13,11 +14,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="home-view">
-    {{ filesStore.queue }}
-    <a-button @click="filesStore.listFiles()">Refresh files</a-button>
-    <a-button @click="filesStore.processQueue()">Process queue</a-button>
-    <UploadButton />
+  <div class="home-view" ref="uploadButton">
+    <a-float-button-group shape="square">
+      <a-float-button
+        @click="filesStore.processQueue()"
+        :badge="{ count: filesStore.queue.length }"
+      >
+        <template #icon>
+          <PhUpload />
+        </template>
+      </a-float-button>
+      <a-float-button @click="fileInput.handleClick()">
+        <template #icon>
+          <PhFolder />
+        </template>
+      </a-float-button>
+      <a-float-button @click="filesStore.listFiles()">
+        <template #icon>
+          <PhArrowsClockwise />
+        </template>
+      </a-float-button>
+    </a-float-button-group>
     <div class="file-grid">
       <div
         class="file"
