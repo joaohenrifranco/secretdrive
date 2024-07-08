@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/application/AuthStore';
 import { useFilesStore } from '@/application/FilesStore';
-import router from '@/presentation/router';
 import { GoogleOutlined, KeyOutlined } from '@ant-design/icons-vue';
 import { onMounted, ref, watchEffect } from 'vue';
 
@@ -15,11 +14,6 @@ const activeTabKey = ref<TabKey>('google');
 const draftPassword = ref('');
 
 const computeState = () => {
-  if (authStore.isLogged && filesStore.isPasswordSet) {
-    router.push({ name: 'explorer' });
-    return;
-  }
-
   if (authStore.isLogged && !filesStore.isPasswordSet) {
     activeTabKey.value = 'password';
     return;
@@ -74,12 +68,16 @@ const handleOk = () => {
         </div>
       </template>
       <template v-else-if="activeTabKey === 'password'">
-        <div class="tab-content">
+        <div class="tab-content" v-if="!filesStore.isPasswordSet">
           <p class="tab-description">This password cannot be recovered. Keep it safe.</p>
           <div class="form-item">
             <a-input-password v-model:value="draftPassword" />
             <a-button type="primary" @click="filesStore.setPassword(draftPassword)">Apply</a-button>
           </div>
+        </div>
+        <div class="tab-content" v-else>
+          <p class="tab-description">Password is set.</p>
+          <a-button @click="filesStore.removePassword">Remove</a-button>
         </div>
       </template>
     </a-card>
