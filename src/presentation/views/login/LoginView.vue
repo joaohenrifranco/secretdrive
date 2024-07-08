@@ -46,7 +46,7 @@ const handleOk = () => {
       :tab-list="tabList"
       :active-tab-key="activeTabKey"
       @tabChange="activeTabKey = $event"
-      style="width: 400px"
+      style="width: min(500px, 100vw);"
     >
       <template #customTab="item: TabItem">
         <div style="width: 120px">
@@ -81,6 +81,9 @@ const handleOk = () => {
         </div>
       </template>
     </a-card>
+    <a-button @click="$router.push({ name: 'explorer' })" v-if="authStore.isLogged" type="primary"
+      >Explore Files</a-button
+    >
   </div>
 </template>
 
@@ -98,6 +101,9 @@ p {
   display: flex;
   justify-content: center;
   align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .tab-content {

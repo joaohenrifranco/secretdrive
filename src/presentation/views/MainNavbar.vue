@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/application/AuthStore';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const authStore = useAuthStore();
 </script>
 
 <template>
   <a-page-header title="Secret Drive" :show-back="false" class="main-navbar">
     <template #extra>
-      <a-avatar v-if="authStore.isLogged" icon="G" @click="authStore.logout" />
+      <a-avatar v-if="authStore.isLogged" icon="G" @click="router.push('login')" style="cursor: pointer;"/>
     </template>
   </a-page-header>
 </template>

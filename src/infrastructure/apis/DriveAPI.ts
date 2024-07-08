@@ -15,8 +15,14 @@ const RESPONSE_CODES = {
 
 const REQUEST_CHUNK_SIZE = 256 * 1024; // 256 KB in bytes
 
+const FOLDER_NAME = 'SECRET_DRIVE';
+
 export class DriveAPI {
+  private static cachedAppFolderId: string | null = null;
+
   static async listFiles(): Promise<ListFilesReturnType> {
+    const appFolderId = await this.ensureAppFolderId();
+
     if (!GoogleAuthAPI.access_token) {
       throw new Error('[GoogleAuth] No access token available');
     }
@@ -25,6 +31,7 @@ export class DriveAPI {
       pageSize: 20,
       fields: 'files(id, name)',
       orderBy: 'createdTime desc',
+      q: `'${appFolderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
     });
     // TODO: Handle next page token
 
@@ -83,6 +90,13 @@ export class DriveAPI {
   }
 
   static async uploadFile(name: string, stream: ReadableStream): Promise<void> {
+    const appFolderId = await this.ensureAppFolderId();
+
+    const fileMetadata = {
+      name,
+      parents: [appFolderId],
+    };
+
     const createResponse = await fetch(
       'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable',
       {
@@ -92,9 +106,7 @@ export class DriveAPI {
           'Content-Type': 'application/json',
           'Content-Length': '0',
         },
-        body: JSON.stringify({
-          name,
-        }),
+        body: JSON.stringify(fileMetadata),
       },
     );
 
@@ -115,5 +127,51 @@ export class DriveAPI {
         Authorization: `Bearer ${GoogleAuthAPI.access_token}`,
       },
     }).then((response) => response.body!);
+  }
+
+  static async findFolder(name: string): Promise<string | null> {
+    if (!GoogleAuthAPI.access_token) {
+      throw new Error('[GoogleAuth] No access token available');
+    }
+
+    const response = await gapi.client.drive.files.list({
+      q: `mimeType='application/vnd.google-apps.folder' and name='${name}'`,
+    });
+
+    return response.result.files?.[0]?.id ?? null;
+  }
+
+  static async createFolder(name: string, parent?: string): Promise<string> {
+    if (!GoogleAuthAPI.access_token) {
+      throw new Error('[GoogleAuth] No access token available');
+    }
+
+    const response = await gapi.client.drive.files.create({
+      resource: {
+        name,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: parent ? [parent] : undefined,
+      },
+    });
+
+    if (!response.result || response.status !== RESPONSE_CODES.created || !response.result.id) {
+      throw new Error(`[DriveAPI] Failed to create folder: ${JSON.stringify(response.result)}`);
+    }
+
+    return response.result.id;
+  }
+
+  private static async ensureAppFolderId(): Promise<string> {
+    if (this.cachedAppFolderId) {
+      return this.cachedAppFolderId;
+    }
+
+    this.cachedAppFolderId = await this.findFolder(FOLDER_NAME);
+
+    if (!this.cachedAppFolderId) {
+      this.cachedAppFolderId = await this.createFolder(FOLDER_NAME);
+    }
+
+    return this.cachedAppFolderId;
   }
 }

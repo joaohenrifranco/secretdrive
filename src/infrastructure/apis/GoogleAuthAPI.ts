@@ -39,7 +39,7 @@ export class GoogleAuthAPI {
     console.info('[GoogleAuthAPI] Creating token client');
     GoogleAuthAPI.tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: '1028248986339-5tvr5e00e160ckqj5vuka7dokr3ipjol.apps.googleusercontent.com',
-      scope: 'https://www.googleapis.com/auth/drive.file',
+      scope: 'https://www.googleapis.com/auth/drive',
       prompt: 'consent',
       callback: this.handleTokenResponse,
     });
