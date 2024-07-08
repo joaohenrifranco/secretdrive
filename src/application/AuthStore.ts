@@ -1,5 +1,6 @@
 import { GoogleAuthAPI, type TokenData } from '@/infrastructure/apis/GoogleAuthAPI';
 import { LocalStorage } from '@/infrastructure/local/LocalStorage';
+import router from '@/infrastructure/router';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
@@ -8,6 +9,14 @@ const LOCAL_STORAGE_KEY = 'tokenData';
 export const useAuthStore = defineStore('AuthStore', () => {
   const isLogged = ref(false);
   const tokenStorage = new LocalStorage<string>(LOCAL_STORAGE_KEY);
+
+  router.beforeEach((to, from, next) => {
+    const authStore = useAuthStore();
+    if (to.meta.public || authStore.isLogged) {
+      return next();
+    }
+    return next({ name: 'login' });
+  });
 
   GoogleAuthAPI.onTokenChange = (tokenData: TokenData) => {
     isLogged.value = !!tokenData.access_token;
@@ -22,7 +31,7 @@ export const useAuthStore = defineStore('AuthStore', () => {
     GoogleAuthAPI.revokeToken();
     tokenStorage.clear();
     isLogged.value = false;
-    onLogout?.();
+    router.push({ name: 'login' });
   }
 
   function init() {
@@ -35,17 +44,11 @@ export const useAuthStore = defineStore('AuthStore', () => {
     return tokenStorage.getExpirationDate();
   }
 
-  let onLogout: (() => void) | null = null;
-  function setOnLogout(callback: () => void) {
-    onLogout = callback;
-  }
-
   return {
     isLogged,
     login,
     logout,
     init,
     getExpirationDate,
-    setOnLogout,
   };
 });

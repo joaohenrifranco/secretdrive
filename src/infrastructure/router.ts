@@ -1,4 +1,3 @@
-import { useAuthStore } from '@/application/AuthStore';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
@@ -16,17 +15,6 @@ const router = createRouter({
       component: () => import('@/presentation/views/login/LoginView.vue'),
     },
   ],
-});
-
-router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore();
-  authStore.setOnLogout(() => router.push({ name: 'login' }));
-
-  if (to.meta.public || authStore.isLogged) {
-    return next();
-  }
-
-  return next({ name: 'login' });
 });
 
 export default router;

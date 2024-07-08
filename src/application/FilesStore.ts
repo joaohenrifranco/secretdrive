@@ -11,6 +11,10 @@ export const useFilesStore = defineStore('FilesStore', () => {
     password.value = newPassword;
   };
 
+  const removePassword = () => {
+    password.value = '';
+  };
+
   const isPasswordSet = computed<boolean>(() => password.value.length > 0);
 
   const files = ref<{ id: string | undefined; name: string | undefined }[]>([]);
@@ -55,6 +59,7 @@ export const useFilesStore = defineStore('FilesStore', () => {
 
   return {
     setPassword,
+    removePassword,
     listFiles,
     isPasswordSet,
     downloadFile,
