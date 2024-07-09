@@ -13,11 +13,25 @@ onMounted(async () => {
   authStore.init();
   loading.value = false;
 });
+
+
+const appTheme = {
+  "token": {
+    "fontSize": 16,
+    "borderRadius": 2,
+    "wireframe": false,
+    "colorPrimary": "#221827"
+  },
+  // algorithm: theme.darkAlgorithm,
+};
+
 </script>
 
 <template>
-  <LoadingView v-if="loading" />
-  <MainView v-else />
+  <a-config-provider :theme="appTheme">
+    <LoadingView v-if="loading" />
+    <MainView v-else />
+  </a-config-provider>
 </template>
 
 <style scoped></style>

@@ -6,6 +6,16 @@ import { computed, ref } from 'vue';
 export const useFilesStore = defineStore('FilesStore', () => {
   const password = ref('');
   const queue = ref<{ name: string; stream: ReadableStream }[]>([]);
+  const isProcessingQueue = ref(false);
+  const isDownloading = ref(false);
+  const isListLoading = ref(false);
+  const isDeleting = ref(false);
+  const files = ref<{ id: string | undefined; name: string | undefined }[]>([]);
+
+  const isPasswordSet = computed<boolean>(() => password.value.length > 0);
+  const isLoading = computed(
+    () => isProcessingQueue.value || isDownloading.value || isListLoading.value || isDeleting.value,
+  );
 
   const setPassword = (newPassword: string) => {
     password.value = newPassword;
@@ -15,17 +25,23 @@ export const useFilesStore = defineStore('FilesStore', () => {
     password.value = '';
   };
 
-  const isPasswordSet = computed<boolean>(() => password.value.length > 0);
-
-  const files = ref<{ id: string | undefined; name: string | undefined }[]>([]);
-
-  async function listFiles() {
+  async function fetchFilesList() {
+    isListLoading.value = true;
     files.value = await DriveAPI.listFiles();
+    isListLoading.value = false;
+  }
+
+  async function deleteFiles(fileIds: string[]) {
+    isDeleting.value = true;
+    await DriveAPI.deleteFiles(fileIds);
+    isDeleting.value = false;
+    await fetchFilesList();
   }
 
   async function uploadFile(name: string, stream: ReadableStream) {
     const encryptedStream = await Crypt.encrypt(stream, password.value);
     await DriveAPI.uploadFile(name, encryptedStream);
+    await fetchFilesList();
   }
 
   async function addToQueue(fileList: FileList) {
@@ -35,10 +51,13 @@ export const useFilesStore = defineStore('FilesStore', () => {
   }
 
   async function processQueue() {
+    isProcessingQueue.value = true;
     for (const { name, stream } of queue.value) {
+      queue.value = queue.value.slice(1);
       await uploadFile(name, stream);
     }
     queue.value = [];
+    isProcessingQueue.value = false;
   }
 
   async function downloadFile(fileId: string) {
@@ -57,16 +76,28 @@ export const useFilesStore = defineStore('FilesStore', () => {
     a.click();
   }
 
+  async function downloadFiles(fileIds: string[]) {
+    isDownloading.value = true;
+    for (const fileId of fileIds) {
+      await downloadFile(fileId);
+    }
+    isDownloading.value = false;
+  }
+
   return {
-    setPassword,
-    removePassword,
-    listFiles,
-    isPasswordSet,
-    downloadFile,
-    addToQueue,
-    processQueue,
+    isProcessingQueue,
     files,
     queue,
     password,
+    setPassword,
+    removePassword,
+    fetchFilesList,
+    deleteFiles,
+    uploadFile,
+    addToQueue,
+    processQueue,
+    downloadFiles,
+    isPasswordSet,
+    isLoading,
   };
 });

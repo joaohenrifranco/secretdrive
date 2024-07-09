@@ -5,6 +5,10 @@ import type {
   Card,
   CardBody,
   CardFooter,
+  ConfigProvider,
+  DirectoryTree,
+  FloatButton,
+  FloatButtonGroup,
   InputPassword,
   PageHeader,
 } from 'ant-design-vue';
@@ -21,5 +25,9 @@ declare module '@vue/runtime-core' {
     AInputPassword: typeof InputPassword;
     ASpace: typeof Space;
     ASpin: typeof Spin;
+    AFloatButton: typeof FloatButton;
+    AFloatButtonGroup: typeof FloatButtonGroup;
+    ADirectoryTree: typeof DirectoryTree;
+    AConfigProvider: typeof ConfigProvider;
   }
 }

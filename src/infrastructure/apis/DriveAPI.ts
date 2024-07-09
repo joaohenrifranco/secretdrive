@@ -174,4 +174,18 @@ export class DriveAPI {
 
     return this.cachedAppFolderId;
   }
+
+  static async deleteFiles(fileIds: string[]): Promise<void> {
+    if (!GoogleAuthAPI.access_token) {
+      throw new Error('[GoogleAuth] No access token available');
+    }
+
+    await Promise.all(
+      fileIds.map((id) =>
+        gapi.client.drive.files.delete({
+          fileId: id,
+        }),
+      ),
+    );
+  }
 }
