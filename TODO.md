@@ -1,2 +1,0 @@
-- [ ] Extract Navbar
-- [ ] Finish login carousel
