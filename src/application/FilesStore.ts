@@ -25,9 +25,17 @@ export const useFilesStore = defineStore('FilesStore', () => {
     password.value = '';
   };
 
-  async function fetchFilesList() {
+  async function reloadFilesList() {
     isListLoading.value = true;
-    files.value = await DriveAPI.listFiles();
+    const response = await DriveAPI.listFiles();
+
+    files.value = await Promise.all(
+      response.map(async (f) => ({
+        id: f.id,
+        name: (await Crypt.decryptString(f.name, password.value)) ?? 'unknown_name',
+      })),
+    );
+
     isListLoading.value = false;
   }
 
@@ -35,13 +43,14 @@ export const useFilesStore = defineStore('FilesStore', () => {
     isDeleting.value = true;
     await DriveAPI.deleteFiles(fileIds);
     isDeleting.value = false;
-    await fetchFilesList();
+    await reloadFilesList();
   }
 
   async function uploadFile(name: string, stream: ReadableStream) {
     const encryptedStream = await Crypt.encrypt(stream, password.value);
-    await DriveAPI.uploadFile(name, encryptedStream);
-    await fetchFilesList();
+    const encryptedName = await Crypt.encryptString(name, password.value);
+    await DriveAPI.uploadFile(encryptedName, encryptedStream);
+    await reloadFilesList();
   }
 
   async function addToQueue(fileList: FileList) {
@@ -63,6 +72,11 @@ export const useFilesStore = defineStore('FilesStore', () => {
   async function downloadFile(fileId: string) {
     const stream = await DriveAPI.downloadFile(fileId);
     const descryptedStream = Crypt.decrypt(stream, password.value);
+    const name = files.value.find((f) => f.id === fileId)?.name;
+
+    if (!name || !descryptedStream) {
+      throw new Error('Failed to download file');
+    }
 
     function streamToArray(stream: ReadableStream<Uint8Array>) {
       return new Response(stream).arrayBuffer();
@@ -72,7 +86,7 @@ export const useFilesStore = defineStore('FilesStore', () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileId;
+    a.download = name;
     a.click();
   }
 
@@ -91,7 +105,7 @@ export const useFilesStore = defineStore('FilesStore', () => {
     password,
     setPassword,
     removePassword,
-    fetchFilesList,
+    fetchFilesList: reloadFilesList,
     deleteFiles,
     uploadFile,
     addToQueue,

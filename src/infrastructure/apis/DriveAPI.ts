@@ -2,8 +2,8 @@ import { getFixedSizeChunk } from '@/infrastructure/utils/fixedSizeChunk';
 import { GoogleAuthAPI } from './GoogleAuthAPI';
 
 type ListFilesReturnType = {
-  id: string | undefined;
-  name: string | undefined;
+  id: string;
+  name: string;
 }[];
 
 const RESPONSE_CODES = {
@@ -35,7 +35,11 @@ export class DriveAPI {
     });
     // TODO: Handle next page token
 
-    return response.result.files?.map((f) => ({ id: f.id, name: f.name })) ?? [];
+    return (
+      (response.result.files
+        ?.map((f) => ({ id: f.id, name: f.name }))
+        .filter((f) => f.id && f.name) as ListFilesReturnType) ?? []
+    );
   }
 
   private static async uploadStream(
